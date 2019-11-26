@@ -1,0 +1,111 @@
+---
+title: "Homework 1"
+author: "Ekran Shahnawaz and Jiansong Xu"
+date: '2018-09-21'
+output:
+    pdf_document: default
+    html_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1 (Chapter 2, #1, 8 marks)
+
+(a) A more flexible method would be better. We want to fit different possible functional forms for f because our n is so large.
+
+(b) A flexible method would be worse for this case. This is because the large number of predictors will overfit the small number of observations.
+
+(c) A flexible method would be better for this case. This is because nonlinear regression covers a wide variety of forms. 
+
+(d) A flexible method would be worse for this case. This is because flexible methods follow the errors or noise too closely. Hence, when the variance of the errors are very high, we don't want to follow those.
+
+
+## Question 2 (Chapter 2, #2, 6 marks)
+
+(a) This is a regression problem because we have a quantitative output of the CEO salary. We are interested in inference here because we want the see the effects our parameters have on CEO salary.
+n = 500 US firms, p = profit, number of employees and industry.
+
+(b) This is a classification problem because we have binary output {success, failure}. We are interested in prediction because we want to predict the success or failure of the new product based off of similar produces that were previously launched.
+n = 20 similar products that were previously launched.
+p = product, marketing budget, competition price,
+and ten other variables
+
+(c) This is a regression problem because we have a quantitative output of the % change in the USD/Euro exchange rate. We are interested prediction because we want to predict the USD/Euro exchange rate based off previously collected data.
+n = 52 weeks where the 2012 data was collected
+p = the % change in the US market, the % change in the British market, and the % change in the German market.
+
+## Question 3 (Chapter 2, #9, 8 marks)
+
+```{r}
+library(ISLR) # use install.packages("ISLR") to install
+data(Auto)
+head(Auto)
+```
+
+(a) Quantitative: mpg, cylinders, displacement, horsepower, weight,acceleration, year; Qualitative: name, origin
+
+(b) Ranges of variables in Auto
+
+```{r}
+myr <- function(x) {
+  out <- range(x)
+  names(out) <- c("min","max")
+  out
+}
+apply(Auto[,1:7],MARGIN=2,FUN=myr)
+```
+
+(c) Mean and Standard deviation for variables in Auto
+
+```{r}
+meansd <- function(x) {
+  out<-c(mean(x),sd(x))
+  names(out) <- c("mean","SD")
+  out
+}
+apply(Auto[,1:7],MARGIN=2, FUN = meansd)
+```
+
+(d) Range, mean and standard deviation for the subset data
+
+```{r}
+# Hint:
+AutoSubset <- Auto[c(1:9,86:nrow(Auto)),1:7]
+apply(AutoSubset[,1:7],MARGIN = 2, FUN = myr)
+apply(AutoSubset[,1:7],MARGIN = 2, FUN = meansd)
+```
+
+(e) We use the pairs function to select our few scatterplots to discuss
+
+```{r fig1, fig.height = 20, fig.width = 30}
+pairs(Auto, cex.labels = 4)
+```
+
+```{r}
+library(ggplot2)
+ggplot(Auto,aes(x=weight,y=mpg))+geom_point()+geom_smooth()
+```
+
+i) The first graph is Weight vs mpg. We see that there is a negative relationship. As we increase weight we have that mpg decreases.
+
+```{r}
+ggplot(Auto,aes(x=horsepower,y=weight))+geom_point()+geom_smooth()
+```
+
+ii) The second graph displays weight vs horsepower. Here we have a positive relation where if horsepower increases, then weight increases as well.
+
+```{r}
+ggplot(Auto,aes(x=year,y=mpg))+geom_point()+geom_smooth()
+```
+
+iii) For the third graph we have mpg vs year. We can  easily see that as the years pass the cars become more efficient.
+
+```{r}
+ggplot(Auto,aes(x=horsepower,y=mpg))+geom_point()+geom_smooth()
+```
+
+iv) The last graph displays horsepower vs mpg. We have a negative relationship here. When we increase horsepower, we see that the effiency decreases.
+
+(f) If we look at graphs above we can see that all of our explanatory variables are somewhat correlated with the mpg variable. However, this is not the case for the explanatory variable called 'name'. We have that there is no correlation between name and mpg. Hence, we believe that all the variables except for names could possibly be useful in predicting mpg.

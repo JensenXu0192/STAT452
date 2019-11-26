@@ -1,0 +1,203 @@
+
+---
+title: "Homework 3"
+author: "name1 and name2 and name3"
+date: '2018-11-02'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Question 1 (Chapter 6, #8, parts (a)-(e), 10 marks)
+
+
+(a) (1 mark)
+```{r}
+set.seed(1)
+X <- rnorm(100)
+e <- rnorm(100)
+
+
+
+```
+(Note: You should set your random seed, for reproducibility.)
+
+(b) (1 mark)
+```{r}
+Y <- 2.5 + 4.6*X + 3.3*(X^2) + 2.9*(X^3) + e
+
+
+```
+
+
+(c) (3 marks)
+For the "best model obtained", you should 
+use one that is parsimonious and close to
+the consensus best according tht the three
+selection criteria.
+
+You don't **have** to create a data frame. 
+`regsubsets()` can take a design matrix and
+response vector, just like `lm.fit()` and 
+`glmnet()`. If you do decide to create a data frame,
+the following hint may be of use:
+```{r}
+library(leaps)
+pmax <- 10
+Xmat <- matrix(NA,nrow=100,ncol=pmax)
+for(i in 1:pmax) {
+  Xmat[,i] <- X^i
+}
+colnames(Xmat) <- paste0("X.",1:pmax)
+dat <- data.frame(Y,Xmat)
+reg <- regsubsets(y = Y, x = Xmat, nvmax = 10, data = dat)
+regsum <- summary(reg)
+plot(regsum$cp, xlab = 'n', ylab = 'Cp')
+plot(regsum$bic, xlab = 'n', ylab = 'BIC')
+plot(regsum$adjr2, xlab = 'n', ylab = 'Rsquare')
+
+
+```
+
+
+(d) (2 marks) 
+```{r}
+reg2 <- regsubsets(y = Y, x = Xmat, nvmax = 10, method = 'forward', data = dat)
+sumfor <- summary(reg2)
+plot(sumfor$cp, xlab = 'n', ylab = 'Cp')
+plot(sumfor$bic, xlab = 'n', ylab = 'BIC')
+plot(sumfor$adjr2, xlab = 'n', ylab = 'Rsquare')
+
+```
+```{r}
+reg3 <- regsubsets(y = Y, x = Xmat, nvmax = 10, method = 'backward', data = dat)
+sumbac <- summary(reg3)
+plot(sumbac$cp, xlab = 'n', ylab ='Cp')
+plot(sumbac$bic, xlab = 'n', ylab = 'BIC')
+plot(sumbac$adjr2, xlab = 'n' , ylab = 'Rsquare')
+
+```
+(e) (3 marks)
+
+```{r}
+library(glmnet)
+lambdas <- 10^{seq(from=-2,to=5,length=100)}
+cv.lafit <- cv.glmnet(Xmat,Y,alpha=1,lambda=lambdas) 
+plot(cv.lafit)
+la.best.lam <- cv.lafit$lambda.1se
+la.best.lam
+la.best <- glmnet(Xmat,Y,alpha=1,lambda=la.best.lam)
+coef(la.best)
+```
+
+
+## Question 2 (Ch6, #9, 12 marks)
+
+(a) (0 marks)
+To make everyone's results comparable, please
+select your test set with the following.
+(Note that we scale all columns, including the response.)
+
+```{r}
+library(ISLR)
+data(College)
+library(dplyr)
+College <- mutate(College,Private = as.numeric(Private=="Yes"))
+College <- data.frame(lapply(College,scale))
+dim(College) # 777 rows, use 111 as test
+set.seed(1)
+testset <- sample(1:777,size=111)
+College.test <- College[testset,]
+College.train <- College[-testset,]
+```
+
+(b) (2 marks)
+```{r}
+fittrain <- lm(Apps ~., data = College.train)
+fittest <- predict(fittrain, College.test)
+mean((fittest - College.test$Apps)^2)
+```
+(c) (2 marks)
+```{r}
+set.seed(123)
+Xfull <- model.matrix(Apps ~., data = College.train)
+Xfull <- Xfull[,-1]
+Y <- College.train$Apps
+ridge <- glmnet(Xfull, Y, alpha = 0, lambda = lambdas)
+cv.ridge <- cv.glmnet(Xfull, Y, alpha = 0, lambda = lambdas)
+best.lambda <- cv.ridge$lambda.1se
+best.lambda
+rr.best <- glmnet(Xfull, Y, alpha = 0, lambda = best.lambda)
+xpred <- model.matrix(Apps ~., data = College.test)
+xpred <- xpred[, -1]
+pred.r <- predict.glmnet(rr.best, s= NULL, xpred)
+mean((pred.r - College.test$Apps)^2)
+```
+(d) (2 marks)
+```{r}
+set.seed(123)
+cv.lasso <- cv.glmnet(Xfull, Y, alpha = 1, lambda = lambdas)
+best.lambda.lasso <- cv.lasso$lambda.1se
+best.lambda.lasso
+la.bast <- glmnet(Xfull, Y, alpha = 1, lambda = best.lambda.lasso)
+pred.la <- predict.glmnet(la.best, s = NULL, xpred)
+```
+
+
+(e) (2 marks)
+```{r}
+library(pls)
+pcrfit <- pcr(Apps ~ ., data = College.train, scale = TRUE, validation='CV')
+predpcr <- predict(pcrfit, College.test)
+mean((predpcr - College.test$Apps)^2)
+```
+
+(f) (2 marks)
+```{r}
+plsfit <- plsr(Apps ~ ., data = College.train, scale=TRUE, validation='CV')
+predpls <- predict(plsfit, College.test)
+mean((predpls - College.test$Apps)^2)
+```
+
+(g) (2 marks)
+
+
+
+## Question 3 (Ch7, #6, 8 marks)
+
+(a) (5 marks)
+```{r}
+set.seed(123)
+data(Wage)
+library(boot)
+library(ggplot2)
+k = 10
+cv.error = rep(0 ,10)
+for (i in 1:10){
+  glm.fit=glm(wage ~ poly(age, i),data=Wage)
+  cv.error[i]=cv.glm (Wage, glm.fit, K = k)$delta [1]
+}
+d <- 1:10
+ds <- data.frame(d, cv.error)
+ds
+ggplot(Wage, aes(x = age, y = wage)) + geom_point() + geom_smooth(formula=wage ~ poly(age, 4))
+```
+
+(b) (3 marks)
+```{r}
+set.seed(1234)
+cv.error.step <- rep(0:10)
+for (i in 2:10){
+  Wage$agecut <- cut(Wage$age, i)
+  step.fit = glm(wage ~ agecut, data = Wage)
+  cv.error.step[i] <- cv.glm(Wage ,step.fit, K= 10)$delta [1]
+}
+cuts <- 2:10
+toplot2 <- data.frame(cv.error.step[2:10], cuts)
+#ggplot(toplot2, aes(x = cuts, y = cv.error.step[2:10])) + geom_point()
+toplot2
+ggplot(Wage, aes(x = age, y = wage)) + geom_point() + geom_smooth(formula = step.fit)
+```

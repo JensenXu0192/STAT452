@@ -1,0 +1,118 @@
+---
+title: "Homework 1"
+author: "Ekran Shahnawaz and Jensen Xu"
+date: '2018-09-21'
+output:output:
+    pdf_document: default
+    html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1 (Chapter 2, #1, 8 marks)
+
+# flexible = models that can fit many different possible functional forms flexible for f
+
+(a) A more flexible method would be better. We want to fit different possible functional forms for f because our n is so large.
+
+(b) A flexible method would be worse for this case. This is because the large number of predictors will overfit the small number of observations.
+
+(c) A flexible method would be better for this case. This is because nonlinear regression covers a wide variety of forms. 
+(d) A flexible method would be worse for this case. This is because flexible methods follow the errors or noise too closely. Hence, when the variance of the errors are very high, we don't want to follow those.
+
+
+## Question 2 (Chapter 2, #2, 6 marks)
+
+# Inference: Given a set of data you want to infer how the output is generated as a function of the data.
+
+# Prediction: Given a new measurement, you want to use an existing data set to build a model that reliably chooses the correct identifier from a set of outcomes.
+
+(a) This is a regression problem because we have a quantitative output of the CEO salary. We are interested in inference here because we want the see the effects our parameters have on CEO salary.
+n = 500 US firms, p = profit, number of employees and industry.
+
+(b) This is a classification problem because we have binary output {success, failure}. We are interested in prediction because we want to predict the success or failure of the new product based off of similar produces that were previously launched.
+n = 20 similar products that were previously launched.
+p = product, marketing budget, competition price,
+and ten other variables
+
+(c) This is a regression problem because we have a quantitative output of the % change in the USD/Euro exchange rate. We are interested prediction because we want to predict the USD/Euro exchange rate based off previously collected data.
+n = 52 weeks where the 2012 data was collected
+p = the % change in the US market, the % change in the British market, and the % change in the German market.
+
+## Question 3 (Chapter 2, #9, 8 marks)
+
+```{r}
+library(ISLR) # use install.packages("ISLR") to install
+data(Auto)
+head(Auto)
+```
+
+(a)
+
+Quantitative: mpg, cylinders, displacement, horsepower, weight,acceleration, year
+  
+Qualitative: name, origin
+
+(b)
+```{r}
+# Hints:
+#   with(Auto,range(mpg)); with(Auto,range(cylinders)), etc.
+# or you can use apply() on subsets of columns
+apply(Auto[,1:7],MARGIN=2,FUN=range)
+# or we can name the output of range and call apply
+myr <- function(x) {
+  out <- range(x)
+  names(out) <- c("min","max")
+  out
+}
+apply(Auto[,1:7],MARGIN=2,FUN=myr)
+```
+
+
+(c)
+
+```{r}
+# Hint
+meansd <- function(x) {
+  out<-c(mean(x),sd(x))
+  names(out) <- c("mean","SD")
+  out
+}
+
+apply(Auto[,1:7],MARGIN=2, FUN = meansd)
+```
+
+
+(d)
+
+```{r}
+# Hint:
+AutoSubset <- Auto[c(1:9,86:nrow(Auto)),1:7]
+apply(AutoSubset[,1:7],MARGIN=2, FUN = meansd)
+```
+
+(e) 
+```{r}
+library(ggplot2)
+ggplot(Auto,aes(x=mpg,y=weight))+geom_point()+geom_smooth()
+ggplot(Auto,aes(x=mpg,y=cylinders))+geom_point()+geom_smooth()
+ggplot(Auto,aes(x=mpg,y=year))+geom_point()+geom_smooth()
+ggplot(Auto,aes(x=mpg,y=weight))+geom_point()+geom_smooth()
+
+```
+mps is correlated with weight.
+The observations with more cylinders is likely to have less mpg.
+Larger the number the year for an observation, that one observation is likely to have larger mpg.
+Weight is negatively correlated with mpg.
+
+
+
+(f) mpg seems to be correlated with all except names. And strong correlation can be found in comparesion with displcement, horsepower, and weight.
+
+
+```{r}
+#correlation matrix
+pairs(Auto)
+```

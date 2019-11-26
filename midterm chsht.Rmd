@@ -1,0 +1,28 @@
+---
+title: "Untitled"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Interactions:
+f(x) = beta0 + beta1(x1) + beta2(x2) + beta3(x1*x2)
+interpreting beta3: the difference between slopes for a 1 unit change in x2.
+test H0: beta3 = 0
+multiple-partial F-test: test for interaction. pr(>F) > threshold, drop.
+
+Residuals:
+in linear model a plot of error vs f(x) should show no pattern.
+if error SD is constant, variation i residuals vs f(x) should look roughly equal.
+
+Unusual obs:
+studentized residuals -- outliers
+Leverage(hi) -- atypical obs  hi > 2(p+1)/n  >3(p+1)/n
+cook's dist -- influnce of an obs
+
+Q-Q plot:
+if heavier tailed than t-distribution, miss some vars explain the dependent var

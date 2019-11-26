@@ -1,0 +1,204 @@
+---
+title: "Homework 2"
+author: 'Jiansong Xu, Ekran Shahnawaz '
+date: '2018-10-05'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Question 1 (Chapter 3, #3, 6 marks)
+
+(a)
+ii 
+Because we need to hold other things in the same model constant to be able to identify the effect of one specific variable. And X3 = 1 when is female and 0 otherwise, so when the individual observation is female, beta3 is added to the intercept, which makes dependent variable greater.
+
+(b)
+172.7 thousands of dollar
+
+(c)
+False.
+Becasue the existance of an effect does not mainly depend on the size of the effect, but the significance of the predictor.  
+
+## Question 2 (Chapter 3, #9, 10 marks)
+
+```{r}
+library(ISLR) 
+data(Auto)
+library(dplyr)
+Auto <- 
+  Auto %>% select(-name) %>% mutate(origin = factor(origin))
+head(Auto)
+```
+
+(a)
+```{r}
+pairs(Auto)
+
+```
+
+(b)
+```{r}
+dm <- data.matrix(Auto, rownames.force = NA)
+cor(dm, use ="everything",
+    method = c("pearson"))
+```
+
+(c)
+```{r}
+lrat <- lm(mpg ~ .+., data = Auto)
+summary(lrat)
+```
+There exists correlation between mpg and all predictors in the model.
+Displacement, weight, year, origin appear to have significant effects.
+The predictor year suggests that a car produced in an addtional year has [7.770e-01] more mpg than one from last year, holding other predictors constant.
+
+(d)
+```{r}
+plot(lrat)
+
+```
+Residual plot suggests there are significant outliers at large fitted values.
+Leverage graph tells there exists one observation with unusual high leverage.
+
+(e)
+```{r}
+summary(lm(mpg ~ .*. , data = Auto))
+```
+The interactions between [cylinders:acceleration, acceleration:year, acceleration:origin2, acceleration:origin3, year:origin2, year:origin3] appears to be significant.
+
+
+(f) To keep the investigation of transformations
+manageable, try transformations of the `weight` variable
+only.
+```{r}
+newlm <- lm(mpg~ cylinders + displacement + horsepower + log(weight) + acceleration + year + origin, data = Auto)
+summary(newlm)
+```
+The growth rate of weight has significant effect on mpg.
+
+## Question 3 (Chapter 4, #4, 7 marks)
+
+(a)
+0.1
+
+(b)
+0.01
+
+(c)
+0.1^100
+
+(d)
+In kNN, when we hold the range, having more predictors leads to less avaliable observations in neighbourhoods.
+Which is likely to make the regression has larger squared errors.
+
+(e)
+0.1
+Because i nthe case of a hypercube, having more predictors changes only the dimensions of the hypercube. So the length as the range of each neighbourhood does not change.
+
+## Question 4 (Chapter 4, #10 parts (a)-(h), 9 marks)
+
+(a)
+```{r}
+library(tidyverse)
+sel <- Weekly %>% dplyr::select(Today, Lag1:Lag5)
+round(cor(sel), 4)
+```
+
+```{r}
+nwk <- mutate(Weekly, Day = 1:nrow(Weekly))
+ggplot(nwk, aes(x=Day, y=Volume, color=Year)) + geom_line() + geom_smooth()
+
+```
+Observed pattern: with year moving forward, the volume increases slightly till early 21th centry.
+              
+(b)
+```{r}
+head(Weekly)
+lg <- glm(Direction ~ .+. -Year -Today, data=Weekly, family=binomial())
+summary(lg)
+```
+Lag2 appears to be significant.
+
+(c)
+```{r}
+pred1 <- function(fit, dat){
+  prob <- predict(fit, newdata=dat, type='response')
+  nr <-nrow(dat)
+  pd <- rep('Down', nr)
+  pd[prob>.5] <- 'Up'
+  pd
+}
+newWeekly <- mutate(Weekly, prediction=pred1(lg, Weekly))
+xtabs(~ prediction+Direction, data=newWeekly) 
+```
+```{R}
+with(newWeekly, mean(prediction != Direction))
+```
+The matrix tells about false positives and false negatives.
+
+(d)
+```{r}
+train <- Weekly %>% filter(Year < 2009)
+test <- Weekly %>% filter(Year >= 2009)
+dsfit <- glm(Direction ~ Lag2, family = binomial, data=train)
+preddf <- mutate(test,prediction=pred1(dsfit, test))
+xtabs(~prediction+Direction, data=preddf)
+```
+    
+
+```{r}
+with(preddf, mean(prediction != Direction))
+
+```
+
+(e)
+```{r}
+library(MASS)
+ldafit <- lda(Direction ~ Lag2, data=train)
+predlda <- predict(ldafit, newdata = test)$class
+ldadf <- mutate(test, prediction=predlda)
+xtabs(~prediction+Direction,data=ldadf)
+```
+
+```{r}
+with(ldadf, mean(prediction != Direction))
+```
+(f)
+```{r}
+qfit <- qda(Direction ~ Lag2, data=train)
+predq <-predict(qfit, newdata = test)$class
+qdf <- mutate(test, prediction = predq)
+xtabs(~prediction+Direction, data=qdf)
+```
+
+```{r}
+with(qdf, mean(prediction != Direction))
+```
+(g)
+```{r}
+library(class)
+ktrain <- dplyr::select(train, Lag2)
+ktest <- dplyr::select(test, Lag2)
+kDirection <- train$Direction
+set.seed(1)
+kpred <- knn(train = ktrain, test = ktest, cl = kDirection, k = 1)
+knntest <- mutate(test, prediction = kpred)
+xtabs(~prediction+Direction, data=knntest)
+```
+
+
+```{r}
+with(knntest, mean(prediction != Direction))
+```
+
+(h)
+Logistic method gives the highest correct prediction rate.
+
+(i) DO NOT HAND IN THIS PART (though you are, of course,
+free to do it on your own).

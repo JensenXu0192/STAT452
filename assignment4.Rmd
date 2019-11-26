@@ -1,0 +1,94 @@
+---
+title: "Homework 4"
+author: "name1 and name2 and name3"
+date: '2018-11-16'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Question 1 (Chapter 8, #11, 9 marks)
+
+
+(a) (1 mark)
+```{r}
+library(ISLR)
+train.set <- 1:1000
+train <- Caravan[train.set,]
+test <- Caravan[-train.set,]
+```
+
+(b) (3 marks)
+(Note: You should set your random seed, for reproducibility.)
+```{r}
+library(gbm)
+library(dplyr)
+set.seed(1)
+train.boost <- gbm(I(Purchase=='Yes') ~ ., data = train, shrinkage = 0.01, distribution="bernoulli", n.trees = 1000)
+summary(train.boost)
+```
+We can see predictors PPERSAUT and MKOOPKLA are most important.
+
+(c) (5 marks)
+```{r}
+#Boosting
+pp <- (predict(train.boost, newdata=test, n.trees=1000,
+                     type="response") >0.2)
+table <- table(pp, test$Purchase)
+table
+sum(table[row(table) != col(table)])/sum(table)
+```
+```{r}
+#logistic
+train.logist <- glm(I(Purchase == 'Yes') ~., data = train, family = binomial)
+pp2 <- (predict(train.logist, newdata = test)>0.2)
+table2 <- table(pp2, test$Purchase)
+table2
+sum(table2[row(table2) != col(table2)])/sum(table2)
+```
+Comparing to logistic regression, boosting method predicts more accurately.
+## Question 2 (Ch9, #7, 5 marks)
+
+(a) (1 mark)
+```{r}
+data(Auto)
+median <- median(Auto$mpg)
+class.mpg <- ifelse(Auto$mpg >= median, 1, 0)
+library(dplyr)
+Auto <- mutate(Auto, class.mpg)
+```
+(b) (2 marks) (The text asks for comments, but 
+I'm not sure what they have in mind, so you **do not need to comment**.)
+```{r}
+set.seed(1)
+library(e1071)
+cv.svm <- tune(svm, class.mpg ~ ., data = Auto, kernel = 'linear', ranges = list(cost = c(10^{-3:3})))
+sum.cv <- summary(cv.svm)$performances
+sum.cv
+sum.cv[which.min(sum.cv$error), ]
+```
+
+(c) (2 marks)
+```{r}
+#Radial kernal
+set.seed(1)
+cv.svm2 <- tune(svm, class.mpg ~ ., data = Auto, kernal = 'radial', ranges = list(cost = c(10^{-3:3}), gamma = c(.5, 1:4)))
+sum.cv2 <- summary(cv.svm2)$performances
+sum.cv2
+sum.cv2[which.min(sum.cv2$error), ]
+```
+
+
+```{r}
+#Polynomial kernal
+set.seed(123)
+cv.svm3 <- tune(svm, class.mpg ~ ., data = Auto, kernal = 'polynomial', cost = 1, gamma = 0.5, degree= c(1:10))
+sum.cv3 <- summary(cv.svm3)$performances
+sum.cv3
+sum.cv3[which.min(sum.cv3$error), ]
+```
+(d) (0 marks) You are welcome to do part (d) but please do not
+hand it in. We will discuss in class.
